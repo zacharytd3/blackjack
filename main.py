@@ -45,10 +45,11 @@ def play_blackjack():  # main gameplay loop
             print(card, end=" ")
         print("")
         if player_total == 21:
-            print("You got 21!")
-            dealer_cards[0] = hidden_card
-            hidden_card_up = True
-            continue
+            if not hidden_card_up:
+                print("You got 21!")
+                hidden_card_up = True
+                dealer_cards[0] = hidden_card
+                continue
         elif player_total > 21:
             print("You busted!")
             dealer_cards[0] = hidden_card
@@ -63,6 +64,7 @@ def play_blackjack():  # main gameplay loop
                 dealer_cards.append(get_cards(deck, 1)[0])
                 continue
             elif dealer_total > 21:
+                print("Dealer bust!")
                 return 0
             else:
                 if player_total > dealer_total:
@@ -168,15 +170,32 @@ def main():  # allows player to start new games, make deposits, make bets
     print(
         f"You are betting ${bet} on {hands} hands. Total bet is equal to ${total_bet}. ")
 
-    result = play_blackjack()
-    # RETURN TYPES
-    # 0 = win, 1 = loss, 2 = double win, 3 = push
-    if result == 0:
-        print("WIN")
-    elif result == 1:
-        print("LOSS")
-    elif result == 3:
-        print("PUSH")
+    while True:
+        result = play_blackjack()
+        # RETURN TYPES
+        # 0 = win, 1 = loss, 2 = double win, 3 = push
+        if result == 0:
+            print("WIN")
+            print(f"You gained ${total_bet}!")
+            balance += total_bet
+        elif result == 1:
+            print("LOSS")
+            print(f"You lost ${total_bet}...")
+            balance -= total_bet
+        elif result == 3:
+            print("PUSH")
+            print("Bet returned.")
+
+        print(f"Your total balance is {balance}")
+
+        while True:
+            play_again = input("Play again with the same bet? (y/n): ")
+            if play_again == "y" or play_again == "n":
+                break
+            else:
+                print("Not a valid input.")
+        if play_again == "n":
+            break
 
 
 main()
