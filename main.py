@@ -1,4 +1,5 @@
 import random
+import time
 
 MAX_HANDS = 3
 
@@ -6,7 +7,7 @@ MIN_BET = 1
 MAX_BET = 100
 
 
-def play_blackjack():
+def play_blackjack():  # main gameplay loop
     deck = {
         "2": 4,
         "3": 4,
@@ -24,25 +25,70 @@ def play_blackjack():
     }
     starting_cards = get_cards(deck, 4)
     player_cards = [starting_cards[0], starting_cards[1]]
-    dealer_cards = [starting_cards[2], starting_cards[3]]
+    dealer_cards = [0, starting_cards[3]]
+    hidden_card = starting_cards[2]
+    hidden_card_up = False
 
     while True:
-        print(f"Dealer's cards: ? {dealer_cards[1]}")
-        print(f"Your cards:     {player_cards[0]} {player_cards[1]}")
         player_total = add_cards(player_cards)
+        dealer_total = add_cards(dealer_cards)
+        print("Dealer's cards:", end=" ")
+        if not hidden_card_up:
+            print("?", end=" ")
+        for card in dealer_cards:
+            if card == 0:
+                continue
+            print(card, end=" ")
+        print("")
+        print("Your cards:", end=" ")
+        for card in player_cards:
+            print(card, end=" ")
+        print("")
         if player_total == 21:
             print("You got 21!")
-            return 0
+            dealer_cards[0] = hidden_card
+            hidden_card_up = True
+            continue
         elif player_total > 21:
             print("You busted!")
+            dealer_cards[0] = hidden_card
+            hidden_card_up = True
             return 1
+
+        time.sleep(2)
+
+        # dealer draws (must hit on soft 17)
+        if hidden_card_up:
+            if dealer_total <= 17:
+                dealer_cards.append(get_cards(deck, 1)[0])
+                continue
+            elif dealer_total > 21:
+                return 0
+            else:
+                if player_total > dealer_total:
+                    return 0
+                elif player_total == dealer_total:
+                    return 3
+                else:
+                    return 1
+
+                    # player action
+        decision = input("What would you like to do? (s/h/d): ")
+        if decision == "s":  # stand
+            dealer_cards[0] = hidden_card
+            hidden_card_up = True
+        elif decision == "h":  # hit
+            player_cards.append(get_cards(deck, 1)[0])
+        else:  # double
+            player_cards.append(get_cards(deck, 1)[0])
 
 
 def add_cards(cards):  # return total value of a hand of cards
     sum = 0
     for card in cards:
+        card = str(card)
         if card.isdigit():
-            sum += card
+            sum += int(card)
         elif card == "A":
             sum += 11  # CHANGE THIS IF IMPLEMENTING ACE
         else:
@@ -106,7 +152,7 @@ def get_bet():  # how much does the user want to bet per hand?
     return amount
 
 
-def main():  # gameplay loop
+def main():  # allows player to start new games, make deposits, make bets
     balance = deposit()
     hands = get_number_of_hands()
     while True:
@@ -123,6 +169,14 @@ def main():  # gameplay loop
         f"You are betting ${bet} on {hands} hands. Total bet is equal to ${total_bet}. ")
 
     result = play_blackjack()
+    # RETURN TYPES
+    # 0 = win, 1 = loss, 2 = double win, 3 = push
+    if result == 0:
+        print("WIN")
+    elif result == 1:
+        print("LOSS")
+    elif result == 3:
+        print("PUSH")
 
 
 main()
