@@ -30,8 +30,9 @@ def play_blackjack():  # main gameplay loop
     hidden_card_up = False
 
     while True:
-        player_total = add_cards(player_cards)
-        dealer_total = add_cards(dealer_cards)
+        soft17 = False
+        player_total, soft17 = add_cards(player_cards)
+        dealer_total, soft17 = add_cards(dealer_cards)
         print("Dealer's cards:", end=" ")
         if not hidden_card_up:
             print("?", end=" ")
@@ -58,9 +59,9 @@ def play_blackjack():  # main gameplay loop
 
         time.sleep(2)
 
-        # dealer draws (must hit on soft 17)
+        # dealer draws (must hit on soft 17 and lower)
         if hidden_card_up:
-            if dealer_total <= 17:
+            if dealer_total < 17 or soft17:  # hit in case of soft 17 or less than 17
                 dealer_cards.append(get_cards(deck, 1)[0])
                 continue
             elif dealer_total > 21:
@@ -85,17 +86,27 @@ def play_blackjack():  # main gameplay loop
             player_cards.append(get_cards(deck, 1)[0])
 
 
-def add_cards(cards):  # return total value of a hand of cards
+def add_cards(cards):  # return total value of a hand of cards plus boolean for soft 17 total
     sum = 0
+    soft17 = False
+    ace_present = False
     for card in cards:
         card = str(card)
         if card.isdigit():
             sum += int(card)
         elif card == "A":
-            sum += 11  # CHANGE THIS IF IMPLEMENTING ACE
+            sum += 1
+            ace_present = True
         else:
             sum += 10
-    return sum
+
+    if ace_present and sum + 10 <= 21:  # we only need to keep track of at least one ace present because others will count as 1 anyways
+        if sum + 10 == 17:
+            return 17, True
+        else:
+            return sum + 10, False
+
+    return sum, False
 
 
 # returns a list of random cards from the deck, removes returned cards from deck
@@ -125,24 +136,9 @@ def deposit():  # deposit money before playing
     return amount
 
 
-def get_number_of_hands():  # how many hands does the user want to play?
+def get_bet():  # how much does the user want to bet?
     while True:
-        hands = input(
-            "Enter the amount of hands to play (1-" + str(MAX_HANDS) + "): ")
-        if hands.isdigit():
-            hands = int(hands)
-            if 1 <= hands <= MAX_HANDS:
-                break
-            else:
-                print("Enter a valid number of hands.")
-        else:
-            print("Please enter a number.")
-    return hands
-
-
-def get_bet():  # how much does the user want to bet per hand?
-    while True:
-        amount = input("How much would you like to bet on each hand? $")
+        amount = input("How much would you like to bet? $")
         if amount.isdigit():
             amount = int(amount)
             if MIN_BET <= amount <= MAX_BET:
@@ -156,19 +152,16 @@ def get_bet():  # how much does the user want to bet per hand?
 
 def main():  # allows player to start new games, make deposits, make bets
     balance = deposit()
-    hands = get_number_of_hands()
     while True:
         bet = get_bet()
-        total_bet = bet*hands
 
-        if total_bet > balance:
+        if bet > balance:
             print(
                 f"You do not have enough to bet that amount. Your current balance is: ${balance}.")
         else:
             break
-    total_bet = bet * hands
     print(
-        f"You are betting ${bet} on {hands} hands. Total bet is equal to ${total_bet}. ")
+        f"You are betting ${bet}. ")
 
     while True:
         result = play_blackjack()
@@ -176,20 +169,24 @@ def main():  # allows player to start new games, make deposits, make bets
         # 0 = win, 1 = loss, 2 = double win, 3 = push
         if result == 0:
             print("WIN")
-            print(f"You gained ${total_bet}!")
-            balance += total_bet
+            print(f"You gained ${bet}!")
+            balance += bet
         elif result == 1:
             print("LOSS")
-            print(f"You lost ${total_bet}...")
-            balance -= total_bet
+            print(f"You lost ${bet}...")
+            balance -= bet
         elif result == 3:
             print("PUSH")
             print("Bet returned.")
 
-        print(f"Your total balance is {balance}")
+        print(f"Your total balance is ${balance}")
+
+        if balance == 0:
+            print(
+                "Oh no! Game over.")
 
         while True:
-            play_again = input("Play again with the same bet? (y/n): ")
+            play_again = input("Play again (y/n): ")
             if play_again == "y" or play_again == "n":
                 break
             else:
