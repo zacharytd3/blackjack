@@ -28,6 +28,7 @@ def play_blackjack():  # main gameplay loop
     dealer_cards = [0, starting_cards[3]]
     hidden_card = starting_cards[2]
     hidden_card_up = False
+    double_down = False
 
     while True:
         soft17 = False
@@ -84,6 +85,9 @@ def play_blackjack():  # main gameplay loop
             player_cards.append(get_cards(deck, 1)[0])
         else:  # double
             player_cards.append(get_cards(deck, 1)[0])
+            double_down = True
+            hidden_card_up = True
+            dealer_cards[0] = hidden_card
 
 
 def add_cards(cards):  # return total value of a hand of cards plus boolean for soft 17 total
@@ -166,7 +170,7 @@ def main():  # allows player to start new games, make deposits, make bets
     while True:
         result = play_blackjack()
         # RETURN TYPES
-        # 0 = win, 1 = loss, 2 = double win, 3 = push
+        # 0 = win, 1 = loss, 2 = double win, 3 = push, 4 = double loss
         if result == 0:
             print("WIN")
             print(f"You gained ${bet}!")
